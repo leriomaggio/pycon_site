@@ -104,8 +104,8 @@
         $('.feedback-vote').click(function(e) {
             e.preventDefault();
             var talk = $(e.target).parents('li');
-            var tid = $('h2', talk).attr('id');
-            var title = $('h2 a', talk).eq(1).html();
+            var tid = $('h3', talk).attr('id');
+            var title = $('h3 a', talk).eq(1).html();
             var speakers = [];
             $('.talk-speakers .speaker-name', talk).each(function() {
                 var s = $(this);
@@ -119,11 +119,10 @@
             var speaker = speakers.join(', ');
             var url = document.location.href + '#' + tid;
             var vote = $($('.rateit', talk).attr('data-rateit-backingfld')).val();
-
             if(title.length > 60) {
                 title = title.substring(0, 57) + '...';
             }
-            var tweet = 'Just voted ' + vote + '/10 "' + title + '" by ' + speaker + ' #europython';
+            var tweet = 'Just voted ' + vote + '/10 "' + title + '" by ' + speaker + ' @pyconit';
             RPXNOW.loadAndRun(['Social'], function () {
                 var activity = new RPXNOW.Social.Activity('Share your vote', tweet, url);
                 activity.setTitle('PyCon - Community voting');
@@ -131,7 +130,7 @@
                 {% url "conference-voting" as u %}
                 activity.addActionLink('Vote a talk', '{{ u|full_url }}');
                 var media = new RPXNOW.Social.ImageMediaCollection();
-                media.addImage('https://ep2013.europython.eu/media/uploads/twitter-avatar.png', url);
+                media.addImage('https://www.pycon.it/media/filer_public/3c/6c/3c6c6ef0-c683-4228-bd37-0f68c6b2f795/logopycon.png', url);
                 activity.setMediaItem(media);
                 RPXNOW.Social.publishActivity(activity);
             });

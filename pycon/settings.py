@@ -29,6 +29,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': SITE_DATA_ROOT + '/p3.db',
+        'OPTIONS': {
+            'timeout': 10,
+        }
     }
 }
 
@@ -96,6 +99,7 @@ STATICFILES_DIRS = (
 # various locations.
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
+    'aldryn_boilerplates.staticfile_finders.AppDirectoriesFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
@@ -106,6 +110,7 @@ SECRET_KEY = ''
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
+    'aldryn_boilerplates.template_loaders.AppDirectoriesLoader',
     'django.template.loaders.app_directories.Loader',
     # 'django.template.loaders.eggs.Loader',
 )
@@ -128,6 +133,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "sekizai.context_processors.sekizai",
     "cms.context_processors.cms_settings",
     "django.core.context_processors.static",
+    'aldryn_boilerplates.context_processors.boilerplate',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -193,14 +199,13 @@ INSTALLED_APPS = (
     'cmsplugin_filer_teaser',
     'cmsplugin_filer_video',
     'djangocms_grid',
-
+    'clear_cache',
     'cms',
     'menus',
     'sekizai',
     'tagging',
     'taggit',
     'authority',
-    #'pages',
     'mptt',
 
     'microblog',
@@ -214,6 +219,9 @@ INSTALLED_APPS = (
     'paypal.standard.ipn',
     'filer',
     'easy_thumbnails',
+    'django_summernote',
+
+    'jobboard',
 
     'recaptcha_works',
     'django_crontab',
@@ -222,8 +230,13 @@ INSTALLED_APPS = (
     'cms_migration',
     'markitup',
     'cms_utils',
-
+    'absolute',
+    'aldryn_forms',
+    'aldryn_forms.contrib.email_notifications',
+    'captcha',
+    'emailit',
     'raven.contrib.django.raven_compat',
+    'aldryn_style',
 )
 
 RECAPTCHA_OPTIONS = {
@@ -233,6 +246,7 @@ RECAPTCHA_OPTIONS = {
     # 'custom_translations': {},
     #'custom_theme_widget': None
 }
+
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -343,13 +357,19 @@ MARKITUP_FILTER = ('markdown2.markdown', {'safe_mode': False})
 
 CKEDITOR_SETTINGS = {
     'height': 300,
-    'stylesSet': 'default:/static/p6/javascripts/ckeditor.wysiwyg.js',
+    'stylesSet': 'default:/static/p8/javascripts/ckeditor.wysiwyg.js',
     'contentsCss': ['/static/css/base.css'],
     'language': '{{ language }}',
     'toolbar': 'CMS',
     'skin': 'moono',
     'extraPlugins': 'cmsplugins',
 }
+ALDRYN_STYLE_CLASS_NAMES = (
+    ('info', ugettext('info')),
+    ('new', ugettext('new')),
+    ('hint', ugettext('hint')),
+)
+
 
 MICROBLOG_LINK = 'http://www.pycon.it'
 MICROBLOG_TITLE = 'PyconIT blog'
@@ -359,7 +379,7 @@ MICROBLOG_POST_LIST_PAGINATION = True
 MICROBLOG_POST_PER_PAGE = 10
 MICROBLOG_MODERATION_TYPE = 'akismet'
 MICROBLOG_AKISMET_KEY = '56c34997206c'
-MICROBLOG_EMAIL_RECIPIENTS = ['pycon-organization@googlegroups.com']
+MICROBLOG_EMAIL_RECIPIENTS = ['pycon-organization@googlegroups.com', 'pycon@lists.python.it']
 MICROBLOG_EMAIL_INTEGRATION = True
 
 MICROBLOG_TWITTER_USERNAME = 'pyconit'
@@ -386,6 +406,7 @@ DJANGOCMS_GRID_CONFIG = {
     'TOTAL_WIDTH': 960,
     'GUTTER': 20,
 }
+ALDRYN_BOILERPLATE_NAME = 'legacy'
 
 
 def MICROBLOG_POST_FILTER(posts, user):
@@ -406,8 +427,8 @@ CONFERENCE_GOOGLE_MAPS = {
     'country': 'it',
 }
 
-CONFERENCE_CONFERENCE = 'pycon6'
-CONFERENCE_SEND_EMAIL_TO = [ 'pycon-organization@googlegroups.com', ]
+CONFERENCE_CONFERENCE = 'pycon10'
+CONFERENCE_SEND_EMAIL_TO = [ 'pycon-organization@googlegroups.com', 'pycon@lists.python.it']
 CONFERENCE_VOTING_DISALLOWED = 'https://www.pycon.it/voting-disallowed'
 
 CONFERENCE_FORMS = {
@@ -531,29 +552,19 @@ CONFERENCE_ADMIN_ATTENDEE_STATS = (
 
 def CONFERENCE_VIDEO_COVER_EVENTS(conference):
     from conference import dataaccess
-    from conference import models
-    from datetime import timedelta
-
-    conf = models.Conference.objects.get(code=conference)
 
     def valid(e):
         if e['tags'] & set(['special', 'break']):
             return False
-        # sprints are in the last two days
-        if e['time'].date() >= conf.conference_end - timedelta(days=1):
-            return False
         # evening events are not recorded
         if e['time'].hour >= 20:
-            return False
-        if len(e['tracks']) == 1 and (
-            e['tracks'][0] in ('helpdesk1', 'helpdesk2')):
             return False
         return True
 
     return [x['id'] for x in filter(valid, dataaccess.events(conf=conference))]
 
 
-def CONFERENCE_VIDEO_COVER_IMAGE(eid, type='front', thumb=False):
+def CONFERENCE_VIDEO_COVER_IMAGE(eid, type='front'):
     import re
     import os.path
     from PIL import Image, ImageDraw, ImageFont
@@ -595,62 +606,47 @@ def CONFERENCE_VIDEO_COVER_IMAGE(eid, type='front', thumb=False):
             lines[ix] = line
         return lines
 
-    if conference in ('ep2012', 'ep2013'):
-        master = Image.open(os.path.join(stuff, 'cover-start-end.png')).convert(
-            'RGBA')
+    def write_text(y, text, font, color, page_width, offset_x):
+        lines = wrap_text(font, text, page_width)
+        for line in lines:
+            text_width, text_height = font.getsize(line)
+            x = offset_x + (page_width / 2 - text_width / 2)
+            d.text((x, y), line, font=font, fill=color)
+            y += text_height + text_height / 2
+        return y
 
-        if type == 'back':
-            return master
-
-        if conference == 'ep2012':
-            ftitle = ImageFont.truetype(
-                os.path.join(stuff, 'League Gothic.otf'),
-                36, encoding="unic")
-            fauthor = ImageFont.truetype(
-                os.path.join(stuff, 'Arial_Unicode.ttf'),
-                21, encoding="unic")
-            y = 175
-        elif conference == 'ep2013':
-            ftitle = ImageFont.truetype(
-                os.path.join(stuff, 'League_Gothic.otf'),
-                36, encoding="unic")
-            fauthor = ImageFont.truetype(
-                os.path.join(stuff, 'League_Gothic.otf'),
-                28, encoding="unic")
-            y = 190
-
-        width = master.size[0] - 40
-        d = ImageDraw.Draw(master)
-
-        title = event['name']
-        if event.get('custom'):
-            # this is a custom event, if starts with an anchor we can
-            # extract the reference
-            m = re.match(r'<a href="(.*)">(.*)</a>', title)
-            if m:
-                title = m.group(2)
-        lines = wrap_text(ftitle, title, width)
-        for l in lines:
-            d.text((20, y), l, font=ftitle, fill=(0x2f, 0x1c, 0x1c, 0xff))
-            y += ftitle.getsize(l)[1] + 8
-
-        if event.get('talk'):
-            spks = [x['name'] for x in event['talk']['speakers']]
-            text = 'by ' + ','.join(spks)
-            lines = wrap_text(fauthor, text, width)
-            for l in lines:
-                d.text((20, y), l, font=fauthor, fill=(0x3d, 0x7e, 0x8a, 0xff))
-                y += fauthor.getsize(l)[1] + 8
-
-        if thumb:
-            master.thumbnail(thumb, Image.ANTIALIAS)
+    master = Image.open(os.path.join(stuff, 'cover.png')).convert('RGBA')
+    if type == 'back':
         return master
-    else:
-        return None
+    font_title = ImageFont.truetype(
+        os.path.join(stuff, 'ProximaNova-Semibold.otf'), 80, encoding="unic")
+    font_author = ImageFont.truetype(
+        os.path.join(stuff, 'Arial_Unicode.ttf'), 45, encoding="unic")
 
+    title_y = 500
+
+    margin = 50
+    width = master.size[0] - margin * 2
+    d = ImageDraw.Draw(master)
+
+    title = event['name']
+    if event.get('custom'):
+        # this is a custom event, if starts with an anchor we can
+        # extract the reference
+        m = re.match(r'<a href="(.*)">(.*)</a>', title)
+        if m:
+            title = m.group(2)
+
+    y = write_text(title_y, title, font_title, color=(226, 3, 59, 255), page_width=width, offset_x=margin)
+    if event.get('talk'):
+        spks = [spk['name'] for spk in event['talk']['speakers']]
+        text = 'by ' + ', '.join(spks)
+        y = write_text(y + 50, text, font_author, color=(255, 255, 255, 255), page_width=width, offset_x=margin)
+
+    return master
 
 CONFERENCE_TICKET_BADGE_ENABLED = True
-CONFERENCE_TICKET_BADGE_PROG_ARGS = ['-e', '0', '-p', 'A4', '-n', '1']
+CONFERENCE_TICKET_BADGE_PROG_ARGS = ['-e', '3', '-p', 'A4', '-n', '4', '--center']
 
 
 def CONFERENCE_TICKET_BADGE_PREPARE_FUNCTION(tickets):
@@ -676,9 +672,12 @@ def CONFERENCE_TALK_VIDEO_ACCESS(request, talk):
 
 
 def ASSOPY_ORDERITEM_CAN_BE_REFUNDED(user, item):
+    from conference.models import Conference
     if user.is_superuser:
         return True
-    return False
+    conference = Conference.objects.get(code=CONFERENCE_CONFERENCE)
+    if not conference.refund_available():
+        return False
     if not item.ticket:
         return False
     ticket = item.ticket
@@ -715,7 +714,6 @@ PINGBACK_TARGET_DOMAIN = 'www.pycon.it'
 COMMENTS_APP = 'hcomments'
 
 P3_FARES_ENABLED = lambda u: True
-P3_NEWSLETTER_SUBSCRIBE_URL = "http://groups.google.com/group/python-italia-aps/boxsubscribe"
 P3_TWITTER_USER = MICROBLOG_TWITTER_USERNAME
 P3_USER_MESSAGE_FOOTER = '''
 
@@ -806,6 +804,34 @@ P3_LIVE_TRACKS = {
             'internal': 'live/pizzanapoli',
         }
     },
+}
+
+SUMMERNOTE_CONFIG = {
+    # Using SummernoteWidget - iframe mode
+    'iframe': False,  # or set False to use SummernoteInplaceWidget - no iframe mode
+
+    # Using Summernote Air-mode
+    'airMode': False,
+
+    # Use native HTML tags (`<b>`, `<i>`, ...) instead of style attributes
+    # (Firefox, Chrome only)
+    'styleWithTags': True,
+
+    # Set text direction : 'left to right' is default.
+    'direction': 'ltr',
+
+    # Change editor size
+    'width': '100%',
+    'height': '480',
+
+
+    # Customize toolbar buttons
+    'toolbar': [
+        ['style', ['style']],
+        ['style', ['bold', 'italic', 'underline', 'clear']],
+        ['para', ['ul', 'ol', 'height']],
+        ['insert', ['link']],
+    ]
 }
 
 

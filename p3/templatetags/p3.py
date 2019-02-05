@@ -632,3 +632,33 @@ def timetable_remove_first(timetable, tag):
             break
 
     return timetable.slice(start=start)
+
+@register.assignment_tag
+def p3_voting_data(conference):
+    from conference.templatetags.conference import voting_data
+    from conference.utils import voting_results
+
+    groups = defaultdict(list)
+    results = voting_results()
+    if results is not None:
+        talk_ids = [ x[0] for x in results ]
+        sub_community = dict(
+            models.P3Talk.objects\
+                .filter(talk__conference=conference)\
+                .values_list('talk', 'sub_community'))
+        for tid, type, language in results:
+            community = sub_community.get(tid, '')
+            groups[(type, community)].append(tid)
+
+    results = voting_data(conference)
+    results['groups'] = dict(groups)
+    return results
+
+
+@fancy_tag(register, takes_context=True)
+def get_latest_conf_deadline(context, limit=None, not_expired=True):
+    try:
+        conf = ConferenceModels.Conference.objects.latest('code')
+        return [conf.name, conf.code, conf.conference_start, conf.conference_end, datetime.today().date()]
+    except IndexError:
+        return []

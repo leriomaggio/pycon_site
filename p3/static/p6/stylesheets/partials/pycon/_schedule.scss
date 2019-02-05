@@ -75,6 +75,11 @@ $cEventStarred           : #d7f5fa;
 body#schedule > .page > .container {
     margin-left: 60px;
 }
+
+body#schedule .alert {
+    text-align: center;
+}
+
 .conference-schedules {
     .event {
         .talk-level.beginner {
@@ -103,9 +108,9 @@ body#schedule > .page > .container {
             //vertical-align: middle;
         }
         .name {
-            margin-bottom: $baselineheight / 2;            
+            margin-bottom: $baselineheight / 2;
         }
-        
+
         .talk-level {
             width: 6px; // Width for colored bar
             height: $baselineheight;
@@ -121,14 +126,14 @@ body#schedule > .page > .container {
             }
         }
         .details {
-            background: $cEventDefaultBackground;            
+            background: $cEventDefaultBackground;
             margin: $baselineheight / 2 0;
             padding: $baselineheight / 2 $gutterwidth / 2;
-            
+
             .abstract {
                 @extend .cms;
             }
-            
+
         }
     }
 }
@@ -146,8 +151,12 @@ body#schedule > .page > .container {
         .schedule__title {
         }
         .schedule__header {
+            // dimensione del font nulla; un hack per eliminare gli spazi
+            // bianchi tra gli elementi inline
+            font-size: 0;
             div {
                 display: inline-block;
+                font-size: 16px;
             }
         }
         .schedule__body {
@@ -301,7 +310,7 @@ body#schedule > .page > .container {
             // gli special normalmente stanno sopra gli eventi non espansi
             // ma gli eventi della track 1 e della track 2 possono sovrapporsi agli special durante il pranzo
             // per questo devo assicurarmi qui che stiano sopra lo special del pranzo
-            .event[class~="tracks-1"]{ z-index: 102; }
+            //.event[class~="tracks-1"]{ z-index: 102; }
             .event.special, .event.break{ z-index: 101; }
         }
 
@@ -361,12 +370,16 @@ body#schedule > .page > .container {
                 border-bottom: 1px solid #0F2424;
                 @include font-size(14);
             }
+            img.language {
+                width: 24px;
+                height: 24px;
+            }
         }
         &[data-talk] {
             .name {
                 a {
                     border: none;
-                    @include font-size(16);     
+                    @include font-size(16);
                     line-height: 1.2; // Talk titles may wrap, add some air
                 }
             }
@@ -388,7 +401,7 @@ body#schedule > .page > .container {
             margin: 0 2px 2px 0;
         }
         .speakers{
-            @include font-size(12);            
+            @include font-size(12);
             line-height: 1.2; // Multiple speakers may wrap, add some air
             text-transform: uppercase;
             margin-bottom: $baselineheight/4;
@@ -828,6 +841,11 @@ body#schedule > .page > .container {
             position: absolute;
             top: 2px;
             right: 2px;
+
+            img {
+                width: 16px;
+                height: 16px;
+            }
         }
         &.exposed {
             .warning.overbook {
@@ -853,7 +871,7 @@ body#schedule > .page > .container {
     ul {
         list-style: none;
     }
-    
+
     .close {
         position: absolute;
         right: 0;
@@ -875,7 +893,7 @@ body#schedule > .page > .container {
             position: absolute;
             border: 1px solid $bordercolor;
             @include transform(rotate(90deg) translate(15px, -10px), left, top);
-            background: white;            
+            background: white;
             width: 12em;
             h3 {
                 padding: $baselineheight/4 $gutterwidth/4;
@@ -888,7 +906,7 @@ body#schedule > .page > .container {
                 @include zero;
                 li {
                     padding: $baselineheight/8 $gutterwidth/4;
-                    @include font-size(16);                    
+                    @include font-size(16);
                     a {
                         // Hover active for all available space
                         //display: block;
@@ -909,7 +927,7 @@ body#schedule > .page > .container {
     > div.selected{
         background-color: $neutralcolor;
         >a{
-            color: $cWhite;            
+            color: $cWhite;
         }
         a.filter-active {
             color: $cGray;
@@ -1110,20 +1128,11 @@ body#schedule > .page > .container {
     }
     .event { width: 100%; }
 
-    .duration-15 { height: $slot15; }
-    .duration-30 { height: $slot15*2; }
-    .duration-45 { height: $slot15*3; }
-    .duration-60 { height: $slot15*4; }
-    .duration-75 { height: $slot15*5; }
-    .duration-90 { height: $slot15*6; }
-    .duration-135 { height: $slot15*9; }
-    .duration-150 { height: $slot15*10; }
-    .duration-180 { height: $slot15*12; }
-    .duration-240 { height: $slot15*16; }
-    .duration-270 { height: $slot15*18; }
-    .duration-420 { height: $slot15*28; }
-    .duration-480 { height: $slot15*32; }
-    .duration-630 { height: $slot15*42; }
+    @for $i from 1 through 42 {
+        .duration-#{15 * $i} {
+            height: $slot15*$i;
+        }
+    }
 
     @each $hour, $hix in (
                     "08": 0, "09": 1, "10": 2, "11": 3,
@@ -1179,8 +1188,8 @@ body#schedule > .page > .container {
     - come ti piace di più, possiamo selezionare gli eventi per:
         # tipo di track
         # tipo di evento (special, keynote, normale)
-        
-OK - stellina gialla        
+
+OK - stellina gialla
 OK - Nomi delle tracce da stilare
 ?? - Traccia keynote: non si capiscono i nomi delle celle
 Troncamento titoli: mancano i puntini per indicare i titoli

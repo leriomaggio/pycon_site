@@ -3,12 +3,15 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 import assopy.models as amodels
 import assopy.forms as aforms
 import conference.forms as cforms
 import conference.models as cmodels
+
+from python_18app import voucher_value
+from assopy.clients.app18 import app18_client
 
 from p3 import dataaccess
 from p3 import models
@@ -34,9 +37,11 @@ TALK_TYPES = (
 # @see p3.admin.TalkAdmin
 TALK_SUBCOMMUNITY = (
     ('', _('-------')),
-    ('odoo', _('Odoo')),
+    #('odoo', _('Odoo')),
+    ('pybusiness', _('PyBusiness')),
+    ('pydatabase', _('PyDatabase')),
     ('pydata', _('PyData')),
-    ('django', _('DjangoVillage')),
+    ('django', _('PyWeb & DevOps')),
     ('pycon', _('Python & Friends')),
 )
 
@@ -160,6 +165,8 @@ class P3SubmissionAdditionalForm(P3TalkFormMixin, cforms.TalkForm):
             self.fields['duration'].initial = self.instance.duration
             if self.instance.id:
                 self.fields['sub_community'].initial = self.instance.p3_talk.sub_community
+                self.fields['slides_agreement'].initial = True
+                self.fields['video_agreement'].initial = True
 
     def save(self, *args, **kwargs):
         talk = super(P3SubmissionAdditionalForm, self).save(*args, **kwargs)
@@ -168,45 +175,27 @@ class P3SubmissionAdditionalForm(P3TalkFormMixin, cforms.TalkForm):
         talk.duration = data['duration']
         talk.qa_duration = data['qa_duration']
         talk.save()
-
-        # If this talk is going to be submitted for the first time, create the
-        # related P3Talk Instance
         try:
-            p3_talk = models.P3Talk.objects.get(talk=talk)
-            p3_talk.sub_community = data['sub_community']
-            p3_talk.save()
+            talk.p3_talk.sub_community = data['sub_community']
+            talk.p3_talk.save()
         except models.P3Talk.DoesNotExist:
-            models.P3Talk.objects.create(talk=talk, sub_community=data['sub_community'])
-
+            models.P3Talk.objects\
+                .create(talk=talk, sub_community=data['sub_community'])
         return talk
 
 class P3TalkForm(P3TalkFormMixin, cforms.TalkForm):
     duration = P3SubmissionForm.base_fields['duration']
     type = P3SubmissionForm.base_fields['type']
     abstract = P3SubmissionForm.base_fields['abstract']
-    sub_community = P3SubmissionForm.base_fields['sub_community']
 
     class Meta(cforms.TalkForm.Meta):
-        exclude = ('duration', 'qa_duration',)
+        exclude = ('duration', 'qa_duration')
 
     def __init__(self, *args, **kwargs):
-        if 'data' in kwargs and 'instance' in kwargs and not 'sub_community' in kwargs['data']:
-            # FIXME: Patch to avoid changin conference view callback
-            # (i.e., conference.views.talk)
-            #
-            # If `sub_community` is not in cleaned_data, is because the cfp is closed!
-            # (see conference.views.talk:229)
-            # However, since the `sub_community` field is required by the form but missing
-            # in the submitted data, the method returns True to allow the validation to pass!
-            # Btw, please note that the template as well hides the sub_community field
-            # in the form (see p3/templates/conference/talk.html)
-            kwargs['data']['sub_community'] = kwargs['instance'].p3_talk.sub_community
         super(P3TalkForm, self).__init__(*args, **kwargs)
 
         if self.instance:
             self.fields['duration'].initial = self.instance.duration
-            self.fields['sub_community'].initial = self.instance.p3_talk.sub_community
-
 
     def save(self, *args, **kwargs):
         talk = super(P3TalkForm, self).save(*args, **kwargs)
@@ -214,18 +203,6 @@ class P3TalkForm(P3TalkFormMixin, cforms.TalkForm):
         talk.duration = data['duration']
         talk.qa_duration = data['qa_duration']
         talk.save()
-
-        # If this talk is going to be submitted for the first time, create the
-        # related P3Talk Instance
-        try:
-            p3_talk = models.P3Talk.objects.get(talk=talk)
-            if 'sub_community' in data:
-                # Available iff CfP is still open! @see p3/templates/conference/talk.html
-                p3_talk.sub_community=data['sub_community']
-                p3_talk.save()
-        except models.P3Talk.DoesNotExist:
-            models.P3Talk.objects.create(talk=talk, sub_community=data['sub_community'])
-
         return talk
 
 class P3SpeakerForm(cforms.SpeakerForm):
@@ -239,6 +216,8 @@ class FormTicket(forms.ModelForm):
     days = forms.MultipleChoiceField(label=_('Probable days of attendance'), choices=tuple(),
                                      widget=forms.CheckboxSelectMultiple,
                                      help_text=_('This ticket grants you full access to the conference. The above selection is just for helping out the organizers'),required=False)
+    food_intolerance = forms.CharField(label=_('Food intolerance'), required=False,
+                                       widget=forms.Textarea(attrs={'rows':3}))
 
     class Meta:
         model = models.TicketConference
@@ -711,6 +690,12 @@ class P3FormTickets(aforms.FormTickets):
         required=False,
         widget=forms.TextInput(attrs={'size': 10}),
     )
+    coupon_18app = forms.CharField(
+        label=_('Insert 18App coupon!'),
+        max_length=10,
+        required=False,
+        widget=forms.TextInput(attrs={'size': 10}),
+    )
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super(P3FormTickets, self).__init__(*args, **kwargs)
@@ -729,8 +714,12 @@ class P3FormTickets(aforms.FormTickets):
             if k.startswith('H'):
                 del self.fields[k]
 
-        self.fields['room_reservations'] = HotelReservationsField(types=('HR',), required=False)
-        self.fields['bed_reservations'] = HotelReservationsField(types=('HB',), required=False)
+        hotel = models.HotelBooking.objects\
+            .filter(conference=settings.CONFERENCE_CONFERENCE)\
+            .count()
+        if hotel > 0:
+            self.fields['room_reservations'] = HotelReservationsField(types=('HR',), required=False)
+            self.fields['bed_reservations'] = HotelReservationsField(types=('HB',), required=False)
 
     def clean_coupon(self):
         data = self.cleaned_data.get('coupon', '').strip()
@@ -745,6 +734,19 @@ class P3FormTickets(aforms.FormTickets):
         if not coupon.valid(self.user):
             raise forms.ValidationError(_('invalid coupon'))
         return coupon
+
+    def clean_coupon_18app(self):
+        data = self.cleaned_data.get('coupon_18app', '').strip()
+
+        if not data:
+            return None
+        if data[0] == '_':
+            raise forms.ValidationError(_('invalid coupon'))
+
+        value = voucher_value(app18_client(), data)
+        if not value:
+            raise forms.ValidationError(_('invalid coupon'))
+        return {'code': data, 'value': value}
 
     def _check_hotel_reservation(self, field_name):
         data = self.cleaned_data.get(field_name, [])

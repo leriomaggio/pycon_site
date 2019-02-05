@@ -146,7 +146,7 @@
                 <div class="button"><a href="#" class="cart-hotel-another-reservation" data-type="bed">{% trans "Add another" %}</a></div>
             </div>
             <div class="total">
-                {% trans "Hotel reservations total (inc. VAT & city tax)" %}: <b>€ 0</b>
+                {% trans "Hotel reservations total (inc. VAT)" %}: <b>€ 0</b>
             </div>
             {% else %}
             <h3>{% trans "Hotel rooms are currently sold out" %}</h3>
@@ -163,7 +163,7 @@
                 Rooms are limited, book now!
                 {% endblocktrans %}
             </p>
-            <p><b>{% trans "Minimum stay: 3 nights" %}</b></p>
+            <p><b>{% trans "Minimum stay: X nights" %}</b></p>
             <div class="">
                 <table class="table">
                     <thead>
@@ -181,7 +181,7 @@
                 <div class="button"><a href="#" class="cart-hotel-another-reservation" data-type="room">{% trans "Add another" %}</a></div>
             </div>
             <div class="total">
-                {% trans "Hotel reservations total (inc. VAT & city tax)" %}: <b>€ 0</b>
+                {% trans "Hotel reservations total (inc. VAT)" %}: <b>€ 0</b>
             </div>
             {% else %}
             <h3>{% trans "Hotel rooms are currently sold out" %}</h3>
@@ -191,64 +191,71 @@
     </div>
 </section>
 
-{% comment %}
 <!--
 = OTHER ========================================================================
 -->
 <section>
     <div class="grid-container">
     <div class="grid-100">
+        {% if other_fares %}
+        <fieldset class="tickets other-goodies">
+            <legend>{% trans "Other Goodies" %}</legend>
+            <div class="">
+                {% render_cart_rows "other" form %}
+            </div>
+            <div class="total">
+                {% trans "Other Goodies total (VAT inc.)" %}: <b>€ 0</b>
+            </div>
+        </fieldset>
+        {% endif %}
 
-            {% if other_fares %}
-            <fieldset class="tickets other-goodies">
-                <legend>{% trans "Other Goodies" %}</legend>
-                <div class="">
-                    {% render_cart_rows "other" form %}
-                </div>
-                <div class="total">
-                    {% trans "Other Goodies total (VAT inc.)" %}: <b>€ 0</b>
-                </div>
-            </fieldset>
-            {% endif %}
-
-            {% if partner_fares %}
-            <fieldset class="tickets partner-program">
-                <legend>{% trans "Partner Program" %}</legend>
-                <p>{% trans "Partner Program intro" %}</p>
-                <div class="">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>{% trans "Event name" %}</th>
-                                <th style="width: 90px">{% trans "Event date" %}</th>
-                                <th>{% trans "Price" %}</th>
-                                <th>{% trans "Q.ty" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% render_cart_rows "partner" form %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="total">
-                    {% trans "Partner Program total (VAT inc.)" %}: <b>€ 0</b>
-                </div>
-            </fieldset>
-            {% endif %}
-    </div><!--/grid -->
-</div><!-- /grid-container -->
+        {% if partner_fares %}
+        <fieldset class="tickets partner-program">
+            <legend>{% trans "Partner Program" %}</legend>
+            <p>{% trans "Partner Program intro" %}</p>
+            <div class="">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Event name" %}</th>
+                            <th style="width: 90px">{% trans "Event date" %}</th>
+                            <th>{% trans "Price" %}</th>
+                            <th>{% trans "Q.ty" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% render_cart_rows "partner" form %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="total">
+                {% trans "Partner Program total (VAT inc.)" %}: <b>€ 0</b>
+            </div>
+        </fieldset>
+        {% endif %}
+    </div>
+    </div>
 </section>
-{% endcomment %}
 <!--
 = COUPON ======================================================================
 -->
 <section>
     <div class="grid-container">
-    <div class="grid-100">
+    <div class="grid-50">
 
         <fieldset class="tickets coupon">
             <legend>{% trans "Coupon code" %}</legend>
             {{ form.coupon|form_field:"coupon" }} <span></span>
+            <div class="save total"><i class="fa fa-check"></i> {% trans "You save (VAT inc.)" %}&emsp;<b>€ 0</b></div>
+        </fieldset>
+
+    </div><!--/grid -->
+
+    <div class="grid-50">
+
+        <fieldset class="tickets coupon_18app">
+            <legend>{% trans "Coupon 18App" %}</legend>
+            {{ form.coupon_18app|form_field:"coupon_18app" }} <span></span>
             <div class="save total"><i class="fa fa-check"></i> {% trans "You save (VAT inc.)" %}&emsp;<b>€ 0</b></div>
         </fieldset>
 
@@ -281,7 +288,7 @@
                 $('#form-cart select').attr('disabled', true);
             {% endif %}
         </script>
-        <script src="{{ STATIC_URL }}p6/javascripts/cart.js"></script>
+        <script src="{{ STATIC_URL }}p9/javascripts/cart.js"></script>
 
 
     </div><!--/grid -->

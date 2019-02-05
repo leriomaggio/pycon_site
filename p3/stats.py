@@ -7,13 +7,15 @@ from django.db.models import Q, Count
 from p3 import models
 from conference import models as cmodels
 
-def _tickets(conf, ticket_type=None, fare_code=None, only_complete=True):
+def _tickets(conf, ticket_type=None, fare_code=None, only_complete=True, include_admin=False):
     qs = Ticket.objects\
         .filter(fare__conference=conf)
-    if only_complete:
-        qs = qs.filter(orderitem__order___complete=True)
-    else:
-        qs = qs.filter(Q(orderitem__order___complete=True)|Q(orderitem__order__method='bank'))
+    order_status = Q(orderitem__order___complete=True)
+    if not only_complete:
+        order_status = order_status | Q(orderitem__order__method='bank')
+    if include_admin:
+        order_status = order_status | Q(orderitem__order__method='admin')
+    qs = qs.filter(order_status)
 
     if ticket_type:
         qs = qs.filter(fare__ticket_type=ticket_type)
@@ -134,7 +136,7 @@ def tickets_status(conf, code=None):
     sim_tickets = _tickets(conf, fare_code='SIM%')\
         .filter(Q(p3_conference_sim=None)|Q(name='')|Q(p3_conference_sim__document=''))\
         .select_related('p3_conference_sim')
-    voupe03 = _tickets(conf, fare_code='VOUPE03')
+    voupe03 = _tickets(conf, fare_code='VOUPE03', include_admin=True)
     from p3.utils import spam_recruiter_by_conf
     spam_recruiting = spam_recruiter_by_conf(conf)
     if code is None:
@@ -214,11 +216,11 @@ def tickets_status(conf, code=None):
                 # p3_conference can be None because it's filled lazily when
                 # the ticket is saved for the first time
                 try:
-                    x.p3_conference
+                    p3c =  x.p3_conference
                 except models.TicketConference.DoesNotExist:
-                    continue
-                if x.p3_conference and x.p3_conference.assigned_to:
-                    email = x.p3_conference.assigned_to
+                    p3c = None
+                if p3c and p3c.assigned_to:
+                    email = p3c.assigned_to
                     u = assignees.get(email)
                 else:
                     email = x.user.email
@@ -454,12 +456,13 @@ def conference_speakers(conf, code=None):
             'columns': (
                 ('name', 'Name'),
                 ('email', 'Email'),
+                ('phone', 'Telefono'),
             ),
             'data': [],
         }
         data = output['data']
         qs = qs\
-            .select_related('user')\
+            .select_related('user__attendeeprofile')\
             .order_by('user__first_name', 'user__last_name')
         for x in qs:
             data.append({
@@ -468,6 +471,7 @@ def conference_speakers(conf, code=None):
                     x.user.first_name,
                     x.user.last_name),
                 'email': x.user.email,
+                'phone': x.user.attendeeprofile.phone,
                 'uid': x.user_id,
             })
     return output
@@ -506,7 +510,7 @@ def conference_speakers_day(conf, code=None):
         return output
     else:
         people_data = data[code[1:]]
-        conf_events = dict([(x['id'], x) for x in events(conf='ep2013')])
+        conf_events = dict([(x['id'], x) for x in events(conf=conf)])
         tracks = defaultdict(list)
         for p in people_data:
             tickets = [

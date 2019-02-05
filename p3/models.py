@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from conference.models import Ticket, ConferenceTaggedItem, AttendeeProfile
 from taggit.managers import TaggableManager
@@ -20,8 +20,10 @@ log = logging.getLogger('p3.models')
 TALK_SUBCOMMUNITY = (
     ('', _('None')),
     ('odoo', _('Odoo')),
+    ('pybusiness', _('PyBusiness')),
+    ('pydatabase', _('PyDatabase')),
     ('pydata', _('PyData')),
-    ('django', _('DjangoVillage')),
+    ('django', _('PyWeb & DevOps')),
     ('pycon', _('Python & Friends')),
 )
 
@@ -47,21 +49,21 @@ class SpeakerConference(models.Model):
     first_time = models.BooleanField(default=False)
 
 TICKET_CONFERENCE_SHIRT_SIZES = (
-    ('fs', 'S (female)'),
-    ('fm', 'M (female)'),
-    ('fl', 'L (female)'),
-    ('fxl', 'XL (female)'),
-    ('fxxl', 'XXL (female)'),
-    ('s', 'S (male)'),
-    ('m', 'M (male)'),
-    ('l', 'L (male)'),
-    ('xl', 'XL (male)'),
-    ('xxl', 'XXL (male)'),
+    ('fs', 'S (stretch fit)'),
+    ('fm', 'M (stretch fit)'),
+    ('fl', 'L (stretch fit)'),
+    ('fxl', 'XL (stretch fit)'),
+    ('fxxl', 'XXL (stretch fit)'),
+    ('s', 'S (standard fit)'),
+    ('m', 'M (standard fit)'),
+    ('l', 'L (standard fit)'),
+    ('xl', 'XL (standard fit)'),
+    ('xxl', 'XXL (standard fit)'),
 )
 TICKET_CONFERENCE_DIETS = (
     ('omnivorous', _('Omnivorous')),
     ('vegetarian', _('Vegetarian')),
-    #('vegan', _('Vegan')),
+    ('vegan', _('Vegan')),
     #('kosher', _('Kosher')),
 )
 TICKET_CONFERENCE_EXPERIENCES = (
@@ -101,6 +103,7 @@ class TicketConference(models.Model):
     shirt_size = models.CharField(max_length=4, choices=TICKET_CONFERENCE_SHIRT_SIZES, default='l')
     python_experience = models.PositiveIntegerField(choices=TICKET_CONFERENCE_EXPERIENCES, default=0)
     diet = models.CharField(max_length=10, choices=TICKET_CONFERENCE_DIETS, default='omnivorous')
+    food_intolerance = models.TextField(null=True, default='', blank=True)
     tagline = models.CharField(
         max_length=60,
         blank=True,
@@ -209,7 +212,7 @@ class HotelRoom(models.Model):
         unique_together = (('booking', 'room_type'),)
 
     def __unicode__(self):
-        return '%s: %s' % (self.conference, self.get_room_type_display())
+        return '%s: %s' % (self.booking.conference, self.get_room_type_display())
 
     def clean(self):
         try:

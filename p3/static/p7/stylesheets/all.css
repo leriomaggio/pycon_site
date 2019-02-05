@@ -1,0 +1,77 @@
+/*
+Error: File to import not found or unreadable: vendor/bourbon/bourbon.
+        on line 13 of stylesheets/_imports.scss
+        from line 16 of ./stylesheets/rock-hammer.scss
+
+8: 
+9: // Media query support required?
+10: $media-queries-supported : true;
+11: 
+12: // Opacity support in IE required via the proprietry ActiveX?
+13: $ie8-opacity-supported 	 : false;
+14: 
+15: // Import all SASS imports
+16: @import 'imports';
+17: 
+18: 
+
+Backtrace:
+stylesheets/_imports.scss:13
+./stylesheets/rock-hammer.scss:16
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/import_node.rb:67:in `rescue in import'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/import_node.rb:45:in `import'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/import_node.rb:28:in `imported_file'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/import_node.rb:37:in `css_import?'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:311:in `visit_import'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/base.rb:36:in `visit'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:158:in `block in visit'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/stack.rb:79:in `block in with_base'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/stack.rb:115:in `with_frame'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/stack.rb:79:in `with_base'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:158:in `visit'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:326:in `block (2 levels) in visit_import'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:326:in `map'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:326:in `block in visit_import'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/stack.rb:88:in `block in with_import'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/stack.rb:115:in `with_frame'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/stack.rb:88:in `with_import'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:323:in `visit_import'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/base.rb:36:in `visit'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:158:in `block in visit'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/stack.rb:79:in `block in with_base'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/stack.rb:115:in `with_frame'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/stack.rb:79:in `with_base'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:158:in `visit'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/base.rb:52:in `block in visit_children'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/base.rb:52:in `map'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/base.rb:52:in `visit_children'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:167:in `block in visit_children'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:179:in `with_environment'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:166:in `visit_children'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/base.rb:36:in `block in visit'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:186:in `visit_root'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/base.rb:36:in `visit'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:157:in `visit'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/visitors/perform.rb:8:in `visit'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/root_node.rb:36:in `css_tree'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/tree/root_node.rb:29:in `render_with_sourcemap'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/engine.rb:378:in `_render_with_sourcemap'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/engine.rb:295:in `render_with_sourcemap'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/plugin/compiler.rb:490:in `update_stylesheet'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/plugin/compiler.rb:215:in `block in update_stylesheets'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/plugin/compiler.rb:209:in `each'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/plugin/compiler.rb:209:in `update_stylesheets'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/plugin/compiler.rb:293:in `watch'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/plugin.rb:108:in `method_missing'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/exec/sass_scss.rb:381:in `watch_or_update'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/exec/sass_scss.rb:51:in `process_result'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/exec/base.rb:52:in `parse'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/lib/sass/exec/base.rb:19:in `parse!'
+/usr/local/lib/ruby/gems/2.3.0/gems/sass-4.0.0.alpha.1/bin/sass:13:in `<top (required)>'
+/usr/local/bin/sass:23:in `load'
+/usr/local/bin/sass:23:in `<main>'
+*/
+body:before {
+  white-space: pre;
+  font-family: monospace;
+  content: "Error: File to import not found or unreadable: vendor/bourbon/bourbon.\A         on line 13 of stylesheets/_imports.scss\A         from line 16 of ./stylesheets/rock-hammer.scss\A \A 8: \A 9: // Media query support required?\A 10: $media-queries-supported : true;\A 11: \A 12: // Opacity support in IE required via the proprietry ActiveX?\A 13: $ie8-opacity-supported 	 : false;\A 14: \A 15: // Import all SASS imports\A 16: @import 'imports';\A 17: \A 18: "; }
